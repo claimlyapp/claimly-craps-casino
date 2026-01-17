@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Claimly Craps - $9 Entry = Real Rewards</title>
+<style>
+body{font-family:Arial;background:linear-gradient(45deg,#0a0a23,#1a1a3a);color:white;text-align:center;padding:50px;}
+h1{font-size:2.5em;margin-bottom:20px;text-shadow:0 0 20px #00bfff;}
+button{background:#00bfff;color:white;border:none;padding:20px 40px;font-size:20px;border-radius:10px;cursor:pointer;margin:10px;transition:all 0.3s;}
+button:hover{background:#0099cc;transform:scale(1.05);}
+#dice{font-size:6em;margin:30px;animation:shake 0.5s;}
+#result{font-size:1.8em;margin:20px;background:rgba(0,0,0,0.5);padding:20px;border-radius:10px;}
+.prize{background:gold;color:black;padding:15px;font-size:1.5em;border-radius:10px;margin:20px;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-10px);}75%{transform:translateX(10px);}}
+</style>
+</head>
+<body>
+<h1>🎲 Claimly Craps Casino</h1>
+<p>Pay $9 → Roll 7 or 11 → Win Crypto/PDF Rewards!</p>
+
+<div id="paywall">
+  <button onclick="pay9()">💳 Pay $9 (Stripe)</button><br>
+  <button onclick="demoMode()">🎮 Demo Mode (Skip Payment)</button>
+</div>
+
+<div id="game" style="display:none;">
+  <div id="result">Welcome! Roll for 7 or 11 to WIN!</div>
+  <div id="dice">🎲 🎲</div>
+  <button id="rollBtn" onclick="roll()">🎲 ROLL DICE</button>
+  <div id="history"></div>
+</div>
+
+<script>
+let paid = false;
+async function pay9() {
+  document.getElementById('paywall').innerHTML = '✅ Payment Processing...';
+  setTimeout(() => {
+    paid = true;
+    document.getElementById('paywall').style.display = 'none';
+    document.getElementById('game').style.display = 'block';
+  }, 2000);
+}
+
+function demoMode() {
+  paid = true;
+  document.getElementById('paywall').style.display = 'none';
+  document.getElementById('game').style.display = 'block';
+}
+
+async function roll() {
+  if(!paid) return alert('Pay $9 first!');
+  
+  try {
+    const res = await fetch('http://localhost:3000/api/roll', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'}
+    });
+    const data = await res.json();
+    
+    document.getElementById('dice').innerHTML = `🎲${data.dice1} 🎲${data.dice2}`;
+    document.getElementById('result').innerHTML = `<strong>${data.result}</strong><br>Total: ${data.total}`;
+    
+    if(data.prize) {
+      document.getElementById('result').innerHTML += `<div class="prize">🎁 ${data.prize}</div>`;
+    }
+  } catch(e) {
+    alert('Server error - check if running on port 3000');
+  }
+}
+</script>
+</body>
+</html>
