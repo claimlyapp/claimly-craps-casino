@@ -1,69 +1,83 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Claimly Craps - $9 Entry = Real Rewards</title>
+<title>Claimly Craps - Pay $9 = Roll Crypto Rewards</title>
+<script src="https://cwallet.com/opencc.js" async></script>
 <style>
-body{font-family:Arial;background:linear-gradient(45deg,#0a0a23,#1a1a3a);color:white;text-align:center;padding:50px;}
-h1{font-size:2.5em;margin-bottom:20px;text-shadow:0 0 20px #00bfff;}
-button{background:#00bfff;color:white;border:none;padding:20px 40px;font-size:20px;border-radius:10px;cursor:pointer;margin:10px;transition:all 0.3s;}
-button:hover{background:#0099cc;transform:scale(1.05);}
+body{font-family:Arial;background:linear-gradient(45deg,#0a0a23,#00ff41);color:white;text-align:center;padding:50px;}
+h1{font-size:2.5em;text-shadow:0 0 20px #00ff41;} 
+button{background:#00ff41;color:black;border:none;padding:20px 40px;font-size:18px;border-radius:10px;cursor:pointer;margin:10px;transition:all 0.3s;}
+button:hover{transform:scale(1.05);box-shadow:0 0 30px #00ff41;}
 #dice{font-size:6em;margin:30px;animation:shake 0.5s;}
 #result{font-size:1.8em;margin:20px;background:rgba(0,0,0,0.5);padding:20px;border-radius:10px;}
 .prize{background:gold;color:black;padding:15px;font-size:1.5em;border-radius:10px;margin:20px;}
+.wallet-input{background:rgba(0,0,0,0.8);border:2px solid #00ff41;color:white;padding:15px;border-radius:10px;width:300px;font-size:16px;}
 @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-10px);}75%{transform:translateX(10px);}}
 </style>
 </head>
 <body>
 <h1>🎲 Claimly Craps Casino</h1>
-<p>Pay $9 → Roll 7 or 11 → Win Crypto/PDF Rewards!</p>
+<p>Pay $9 → Roll 7/11 → Win BTC Rewards!</p>
+
+<div id="wallet-section">
+  <input type="text" class="wallet-input" id="btcWallet" placeholder="Enter your Bitcoin wallet address">
+  <br><button onclick="saveWallet()">✅ Save Bitcoin Wallet</button>
+</div>
 
 <div id="paywall">
-  <button onclick="pay9()">💳 Pay $9 (Stripe)</button><br>
-  <button onclick="demoMode()">🎮 Demo Mode (Skip Payment)</button>
+  <!-- CWALLET PAYMENT BUTTON ($9 BTC) -->
+  <div class="ccwallet__tipbox__button" 
+       data-code="RKQWBDSI" 
+       data-button-type="button" 
+       data-button-text="₿ Pay $9 with Cwallet (BTC)" 
+       data-button-style="black">
+  </div><br>
+  
+  <button onclick="demoMode()">🎮 Demo Mode (Free Rolls)</button>
 </div>
 
 <div id="game" style="display:none;">
-  <div id="result">Welcome! Roll for 7 or 11 to WIN!</div>
+  <div id="result">Roll 7 or 11 to WIN BTC prizes!</div>
   <div id="dice">🎲 🎲</div>
-  <button id="rollBtn" onclick="roll()">🎲 ROLL DICE</button>
-  <div id="history"></div>
+  <button onclick="roll()">🎲 ROLL DICE</button>
+  <div id="wallet-display"></div>
 </div>
 
 <script>
-let paid = false;
-async function pay9() {
-  document.getElementById('paywall').innerHTML = '✅ Payment Processing...';
-  setTimeout(() => {
-    paid = true;
-    document.getElementById('paywall').style.display = 'none';
-    document.getElementById('game').style.display = 'block';
-  }, 2000);
+let paid = false; let btcWallet = '';
+function saveWallet() {
+  btcWallet = document.getElementById('btcWallet').value;
+  if(btcWallet) {
+    document.getElementById('wallet-display').innerHTML = 
+      `<div style="background:#00ff41;color:black;padding:10px;border-radius:10px;">
+        ✓ Bitcoin Wallet Saved: ${btcWallet.substring(0,20)}...
+      </div>`;
+  }
 }
 
 function demoMode() {
+  if(!btcWallet) return alert('Enter Bitcoin wallet first!');
   paid = true;
   document.getElementById('paywall').style.display = 'none';
   document.getElementById('game').style.display = 'block';
 }
 
 async function roll() {
-  if(!paid) return alert('Pay $9 first!');
+  if(!paid || !btcWallet) return alert('Pay $9 + Enter Bitcoin wallet first!');
   
   try {
-    const res = await fetch('http://localhost:3000/api/roll', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'}
-    });
+    const res = await fetch('http://localhost:3000/api/roll');
     const data = await res.json();
     
     document.getElementById('dice').innerHTML = `🎲${data.dice1} 🎲${data.dice2}`;
     document.getElementById('result').innerHTML = `<strong>${data.result}</strong><br>Total: ${data.total}`;
     
     if(data.prize) {
-      document.getElementById('result').innerHTML += `<div class="prize">🎁 ${data.prize}</div>`;
+      document.getElementById('result').innerHTML += 
+        `<div class="prize">🎁 ${data.prize} → ${btcWallet.substring(0,12)}...</div>`;
     }
   } catch(e) {
-    alert('Server error - check if running on port 3000');
+    alert('Server error - check port 3000');
   }
 }
 </script>
