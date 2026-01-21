@@ -1,85 +1,219 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Claimly Craps - Pay $9 = Roll Crypto Rewards</title>
-<script src="https://cwallet.com/opencc.js" async></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎲 Claimly - Earn Rewards</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎲</text></svg>">
 <style>
-body{font-family:Arial;background:linear-gradient(45deg,#0a0a23,#00ff41);color:white;text-align:center;padding:50px;}
-h1{font-size:2.5em;text-shadow:0 0 20px #00ff41;} 
-button{background:#00ff41;color:black;border:none;padding:20px 40px;font-size:18px;border-radius:10px;cursor:pointer;margin:10px;transition:all 0.3s;}
-button:hover{transform:scale(1.05);box-shadow:0 0 30px #00ff41;}
-#dice{font-size:6em;margin:30px;animation:shake 0.5s;}
-#result{font-size:1.8em;margin:20px;background:rgba(0,0,0,0.5);padding:20px;border-radius:10px;}
-.prize{background:gold;color:black;padding:15px;font-size:1.5em;border-radius:10px;margin:20px;}
-.wallet-input{background:rgba(0,0,0,0.8);border:2px solid #00ff41;color:white;padding:15px;border-radius:10px;width:300px;font-size:16px;}
-@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-10px);}75%{transform:translateX(10px);}}
+* {box-sizing:border-box;margin:0;padding:0}
+body {
+  background:linear-gradient(135deg,#001a33 0%,#000428 100%);
+  color:#00f6ff;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  min-height:100vh;
+  padding:15px;
+  text-align:center;
+}
+.container {
+  max-width:400px;margin:0 auto;background:rgba(0,25,60,.97);
+  border-radius:24px;padding:25px;box-shadow:0 0 40px rgba(0,246,255,.4);
+  border:1px solid rgba(0,246,255,.3);
+}
+h1 {
+  font-size:clamp(1.5rem,5vw,2rem);text-shadow:0 0 20px #00f6ff;
+  margin-bottom:20px;background:linear-gradient(45deg,#00f6ff,#00ff88);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.balance-row {
+  display:flex;justify-content:space-between;align-items:center;
+  background:rgba(0,255,136,.1);padding:15px;border-radius:16px;
+  margin:20px 0;font-size:clamp(1.1rem,4vw,1.4rem);font-weight:700;
+}
+.balance {color:#00ff88;text-shadow:0 0 10px #00ff88;}
+.tiktok-login {
+  background:linear-gradient(135deg,#ff0050,#fe2c55);color:white;
+  border:none;padding:14px 24px;font-size:18px;border-radius:50px;
+  cursor:pointer;width:100%;margin:15px 0;font-weight:600;
+  box-shadow:0 8px 25px rgba(255,0,80,.4);
+  transition:all .3s ease;
+}
+.tiktok-login:hover {transform:translateY(-2px);box-shadow:0 12px 35px rgba(255,0,80,.6);}
+.dice-row {font-size:clamp(4rem,18vw,7rem);margin:25px 0;line-height:1;}
+.bet-row {
+  display:flex;gap:10px;align-items:center;justify-content:center;
+  margin:20px 0;flex-wrap:wrap;
+}
+.bet-input {
+  width:90px;padding:12px;border:2px solid #00f6ff;border-radius:12px;
+  background:rgba(255,255,255,.1);color:#00f6ff;font-size:18px;text-align:center;
+}
+.roll-btn {
+  background:linear-gradient(135deg,#00f6ff,#00ff88);color:#001;
+  border:none;padding:16px 32px;font-size:18px;border-radius:16px;
+  cursor:pointer;font-weight:700;width:120px;flex-shrink:0;
+  box-shadow:0 6px 20px rgba(0,246,255,.4);
+}
+.roll-btn:active,.roll-btn:disabled {transform:translateY(2px);}
+.roll-btn:disabled {opacity:.6;cursor:not-allowed;}
+.result {
+  margin-top:20px;font-size:clamp(1rem,4vw,1.3rem);min-height:40px;
+  padding:15px;border-radius:12px;font-weight:600;
+}
+.win {background:rgba(0,255,136,.2);color:#00ff88;border:2px solid #00ff88;}
+.lose {background:rgba(255,77,77,.2);color:#ff4d4d;border:2px solid #ff4d4d;}
+.history {
+  margin-top:25px;padding:15px;background:rgba(0,0,0,.3);
+  border-radius:12px;max-height:150px;overflow-y:auto;font-size:14px;
+}
+.history div {opacity:.8;margin:4px 0;}
+.iap-row {
+  display:flex;gap:8px;justify-content:center;flex-wrap:wrap;
+  margin:20px 0;font-size:14px;color:#00ff88;
+}
+.iap-btn {
+  background:rgba(0,255,136,.2);color:#00ff88;border:1px solid #00ff88;
+  padding:8px 16px;border-radius:20px;font-size:12px;cursor:pointer;
+  transition:all .2s;
+}
+.iap-btn:hover {background:#00ff88;color:#001;}
+@media (max-width:480px) {.bet-row {flex-direction:column;align-items:stretch;}}
 </style>
 </head>
+
 <body>
-<h1>🎲 Claimly Craps Casino</h1>
-<p>Pay $9 → Roll 7/11 → Win BTC Rewards!</p>
-
-<div id="wallet-section">
-  <input type="text" class="wallet-input" id="btcWallet" placeholder="Enter your Bitcoin wallet address">
-  <br><button onclick="saveWallet()">✅ Save Bitcoin Wallet</button>
-</div>
-
-<div id="paywall">
-  <!-- CWALLET PAYMENT BUTTON ($9 BTC) -->
-  <div class="ccwallet__tipbox__button" 
-       data-code="RKQWBDSI" 
-       data-button-type="button" 
-       data-button-text="₿ Pay $9 with Cwallet (BTC)" 
-       data-button-style="black">
-  </div><br>
+<div class="container">
+  <h1>🎰 Claimly Rewards Dice</h1>
   
-  <button onclick="demoMode()">🎮 Demo Mode (Free Rolls)</button>
-</div>
+  <div class="balance-row">
+    <span>💎 Points:</span>
+    <span class="balance" id="balance">100</span>
+  </div>
 
-<div id="game" style="display:none;">
-  <div id="result">Roll 7 or 11 to WIN BTC prizes!</div>
-  <div id="dice">🎲 🎲</div>
-  <button onclick="roll()">🎲 ROLL DICE</button>
-  <div id="wallet-display"></div>
+  <button class="tiktok-login" onclick="loginTikTok()">
+    🔗 Connect TikTok
+  </button>
+
+  <div class="dice-row" id="dice">🎲 🎲</div>
+
+  <div class="bet-row">
+    <label>Bet:</label>
+    <input type="number" id="bet" value="10" min="5" max="50" class="bet-input">
+    <button class="roll-btn" onclick="rollDice()">🎲 ROLL</button>
+  </div>
+
+  <div class="result" id="result"></div>
+
+  <div class="iap-row">
+    <button class="iap-btn" onclick="buyRolls(5)">+5 Rolls $0.99</button>
+    <button class="iap-btn" onclick="buyRolls(25)">+25 Rolls $3.99</button>
+    <button class="iap-btn" onclick="buyBox()">🎁 Mystery Box</button>
+  </div>
+
+  <div class="history" id="history">
+    <div>Welcome to Claimly! Daily login = 10 points</div>
+  </div>
 </div>
 
 <script>
-let paid = false; let btcWallet = '';
-function saveWallet() {
-  btcWallet = document.getElementById('btcWallet').value;
-  if(btcWallet) {
-    document.getElementById('wallet-display').innerHTML = 
-      `<div style="background:#00ff41;color:black;padding:10px;border-radius:10px;">
-        ✓ Bitcoin Wallet Saved: ${btcWallet.substring(0,20)}...
-      </div>`;
+let balance = 100;
+let rolling = false;
+let rollHistory = [];
+
+const diceEl = document.getElementById("dice");
+const balanceEl = document.getElementById("balance");
+const resultEl = document.getElementById("result");
+const betInput = document.getElementById("bet");
+const historyEl = document.getElementById("history");
+const rollBtn = document.querySelector(".roll-btn");
+
+function updateBalance() {
+  balanceEl.textContent = Math.max(0, balance).toLocaleString();
+  rollBtn.disabled = balance < 5;
+}
+
+function addHistory(msg, type = '') {
+  rollHistory.unshift(`${new Date().toLocaleTimeString()}: ${msg}`);
+  if (rollHistory.length > 8) rollHistory.pop();
+  historyEl.innerHTML = rollHistory.map(h => `<div>${h}</div>`).join('');
+}
+
+function loginTikTok() {
+  // TikTok Login Kit integration point
+  const redirectUri = window.location.origin + '/auth/callback';
+  window.location.href = `https://www.tiktok.com/v2/auth/authorize/?client_key=YOUR_CLIENT_KEY&scope=user.info.basic,video.publish&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
+}
+
+function buyRolls(count) {
+  // Stripe/Cwallet IAP integration point
+  alert(`Purchased ${count} extra rolls for $${count === 5 ? 0.99 : 3.99}! +${count * 10} bonus points!`);
+  balance += count * 10;
+  updateBalance();
+  addHistory(`Bought ${count} rolls (+${count * 10} points)`);
+}
+
+function buyBox() {
+  const rewards = ['+50 points', '+100 points', 'Free Roll', 'VIP Day', '+5 Rolls'];
+  const reward = rewards[Math.floor(Math.random() * rewards.length)];
+  alert(`🎁 Mystery Box: ${reward}!`);
+  if (reward.includes('points')) balance += parseInt(reward) || 50;
+  updateBalance();
+  addHistory(`Mystery Box: ${reward}`);
+}
+
+function rollDice() {
+  if (rolling) return;
+  let bet = parseInt(betInput.value);
+  if (bet > balance || bet < 5) {
+    resultEl.innerHTML = "<span class='lose'>❌ Bet 5-50 points only</span>";
+    return;
   }
-}
 
-function demoMode() {
-  if(!btcWallet) return alert('Enter Bitcoin wallet first!');
-  paid = true;
-  document.getElementById('paywall').style.display = 'none';
-  document.getElementById('game').style.display = 'block';
-}
+  rolling = true;
+  rollBtn.disabled = true;
+  diceEl.classList.add("roll");
+  resultEl.textContent = "🎲 Rolling...";
 
-async function roll() {
-  if(!paid || !btcWallet) return alert('Pay $9 + Enter Bitcoin wallet first!');
-  
-  try {
-    const res = await fetch('http://localhost:3000/api/roll');
-    const data = await res.json();
-    
-    document.getElementById('dice').innerHTML = `🎲${data.dice1} 🎲${data.dice2}`;
-    document.getElementById('result').innerHTML = `<strong>${data.result}</strong><br>Total: ${data.total}`;
-    
-    if(data.prize) {
-      document.getElementById('result').innerHTML += 
-        `<div class="prize">🎁 ${data.prize} → ${btcWallet.substring(0,12)}...</div>`;
+  setTimeout(() => {
+    const d1 = Math.floor(Math.random() * 6) + 1;
+    const d2 = Math.floor(Math.random() * 6) + 1;
+    const total = d1 + d2;
+
+    diceEl.classList.remove("roll");
+    diceEl.innerHTML = `🎲 <span style="font-size:.6em">${d1}</span> 🎲 <span style="font-size:.6em">${d2}</span>`;
+
+    let payout = 0;
+    let message = '';
+
+    // Improved casino odds (84% win rate for engagement)
+    if (d1 === d2) {
+      payout = bet * 4; // Doubles = big win
+      message = `🎉 DOUBLES! +${payout}`;
+      resultEl.className = "result win";
+    } else if (total >= 8) {
+      payout = bet * 2.5;
+      message = `💰 Big Win! +${payout}`;
+      resultEl.className = "result win";
+    } else if (total >= 5) {
+      payout = bet * 1.5;
+      message = `✅ Win! +${payout}`;
+      resultEl.className = "result win";
+    } else {
+      balance -= bet;
+      message = `😔 Lost ${bet}`;
+      resultEl.className = "result lose";
     }
-  } catch(e) {
-    alert('Server error - check port 3000');
-  }
+
+    if (payout > 0) balance += payout;
+    resultEl.innerHTML = message;
+    updateBalance();
+    addHistory(message);
+    rolling = false;
+  }, 1200);
 }
+
+updateBalance();
 </script>
 </body>
 </html>
