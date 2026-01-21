@@ -1,219 +1,222 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎲 Claimly - Earn Rewards</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎲</text></svg>">
-<style>
-* {box-sizing:border-box;margin:0;padding:0}
-body {
-  background:linear-gradient(135deg,#001a33 0%,#000428 100%);
-  color:#00f6ff;
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
-  min-height:100vh;
-  padding:15px;
-  text-align:center;
-}
-.container {
-  max-width:400px;margin:0 auto;background:rgba(0,25,60,.97);
-  border-radius:24px;padding:25px;box-shadow:0 0 40px rgba(0,246,255,.4);
-  border:1px solid rgba(0,246,255,.3);
-}
-h1 {
-  font-size:clamp(1.5rem,5vw,2rem);text-shadow:0 0 20px #00f6ff;
-  margin-bottom:20px;background:linear-gradient(45deg,#00f6ff,#00ff88);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-clip:text;
-}
-.balance-row {
-  display:flex;justify-content:space-between;align-items:center;
-  background:rgba(0,255,136,.1);padding:15px;border-radius:16px;
-  margin:20px 0;font-size:clamp(1.1rem,4vw,1.4rem);font-weight:700;
-}
-.balance {color:#00ff88;text-shadow:0 0 10px #00ff88;}
-.tiktok-login {
-  background:linear-gradient(135deg,#ff0050,#fe2c55);color:white;
-  border:none;padding:14px 24px;font-size:18px;border-radius:50px;
-  cursor:pointer;width:100%;margin:15px 0;font-weight:600;
-  box-shadow:0 8px 25px rgba(255,0,80,.4);
-  transition:all .3s ease;
-}
-.tiktok-login:hover {transform:translateY(-2px);box-shadow:0 12px 35px rgba(255,0,80,.6);}
-.dice-row {font-size:clamp(4rem,18vw,7rem);margin:25px 0;line-height:1;}
-.bet-row {
-  display:flex;gap:10px;align-items:center;justify-content:center;
-  margin:20px 0;flex-wrap:wrap;
-}
-.bet-input {
-  width:90px;padding:12px;border:2px solid #00f6ff;border-radius:12px;
-  background:rgba(255,255,255,.1);color:#00f6ff;font-size:18px;text-align:center;
-}
-.roll-btn {
-  background:linear-gradient(135deg,#00f6ff,#00ff88);color:#001;
-  border:none;padding:16px 32px;font-size:18px;border-radius:16px;
-  cursor:pointer;font-weight:700;width:120px;flex-shrink:0;
-  box-shadow:0 6px 20px rgba(0,246,255,.4);
-}
-.roll-btn:active,.roll-btn:disabled {transform:translateY(2px);}
-.roll-btn:disabled {opacity:.6;cursor:not-allowed;}
-.result {
-  margin-top:20px;font-size:clamp(1rem,4vw,1.3rem);min-height:40px;
-  padding:15px;border-radius:12px;font-weight:600;
-}
-.win {background:rgba(0,255,136,.2);color:#00ff88;border:2px solid #00ff88;}
-.lose {background:rgba(255,77,77,.2);color:#ff4d4d;border:2px solid #ff4d4d;}
-.history {
-  margin-top:25px;padding:15px;background:rgba(0,0,0,.3);
-  border-radius:12px;max-height:150px;overflow-y:auto;font-size:14px;
-}
-.history div {opacity:.8;margin:4px 0;}
-.iap-row {
-  display:flex;gap:8px;justify-content:center;flex-wrap:wrap;
-  margin:20px 0;font-size:14px;color:#00ff88;
-}
-.iap-btn {
-  background:rgba(0,255,136,.2);color:#00ff88;border:1px solid #00ff88;
-  padding:8px 16px;border-radius:20px;font-size:12px;cursor:pointer;
-  transition:all .2s;
-}
-.iap-btn:hover {background:#00ff88;color:#001;}
-@media (max-width:480px) {.bet-row {flex-direction:column;align-items:stretch;}}
-</style>
-</head>
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { createPageUrl } from './utils';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
+import { 
+  Home, 
+  Gift, 
+  Dice5, 
+  Trophy, 
+  Wallet, 
+  User, 
+  Menu, 
+  X,
+  Sparkles,
+  Crown
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-<body>
-<div class="container">
-  <h1>🎰 Claimly Rewards Dice</h1>
+export default function Layout({ children, currentPageName }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState(null);
   
-  <div class="balance-row">
-    <span>💎 Points:</span>
-    <span class="balance" id="balance">100</span>
-  </div>
+  const { data: userRewards } = useQuery({
+    queryKey: ['userRewards', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return null;
+      const rewards = await base44.entities.UserRewards.filter({ user_email: user.email });
+      return rewards[0] || null;
+    },
+    enabled: !!user?.email
+  });
 
-  <button class="tiktok-login" onclick="loginTikTok()">
-    🔗 Connect TikTok
-  </button>
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+      } catch (e) {
+        // Not logged in
+      }
+    };
+    loadUser();
+  }, []);
 
-  <div class="dice-row" id="dice">🎲 🎲</div>
+  const navItems = [
+    { name: 'Home', icon: Home, page: 'Home' },
+    { name: 'Rewards', icon: Gift, page: 'Rewards' },
+    { name: 'Dice Game', icon: Dice5, page: 'DiceGame' },
+    { name: 'Challenges', icon: Trophy, page: 'Challenges' },
+    { name: 'Wallet', icon: Wallet, page: 'Wallet' },
+  ];
 
-  <div class="bet-row">
-    <label>Bet:</label>
-    <input type="number" id="bet" value="10" min="5" max="50" class="bet-input">
-    <button class="roll-btn" onclick="rollDice()">🎲 ROLL</button>
-  </div>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
+      <style>{`
+        :root {
+          --claimly-gold: #F6C744;
+          --claimly-purple: #9333EA;
+          --claimly-pink: #EC4899;
+        }
+        .glow-gold {
+          box-shadow: 0 0 30px rgba(246, 199, 68, 0.3);
+        }
+        .glow-purple {
+          box-shadow: 0 0 30px rgba(147, 51, 234, 0.4);
+        }
+        .gradient-text {
+          background: linear-gradient(135deg, #F6C744 0%, #EC4899 50%, #9333EA 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        .glass {
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .card-shine {
+          position: relative;
+          overflow: hidden;
+        }
+        .card-shine::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+          animation: shine 3s infinite;
+        }
+        @keyframes shine {
+          0% { left: -100%; }
+          50% { left: 100%; }
+          100% { left: 100%; }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        .float {
+          animation: float 3s ease-in-out infinite;
+        }
+      `}</style>
 
-  <div class="result" id="result"></div>
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 glass">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <Link to={createPageUrl('Home')} className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 via-pink-500 to-purple-600 flex items-center justify-center glow-gold">
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-xl font-bold gradient-text">Claimly</span>
+            </Link>
 
-  <div class="iap-row">
-    <button class="iap-btn" onclick="buyRolls(5)">+5 Rolls $0.99</button>
-    <button class="iap-btn" onclick="buyRolls(25)">+25 Rolls $3.99</button>
-    <button class="iap-btn" onclick="buyBox()">🎁 Mystery Box</button>
-  </div>
+            {/* Desktop Nav */}
+            <nav className="hidden md:flex items-center gap-1">
+              {navItems.map((item) => (
+                <Link
+                  key={item.page}
+                  to={createPageUrl(item.page)}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300",
+                    currentPageName === item.page
+                      ? "bg-gradient-to-r from-yellow-400/20 to-purple-500/20 text-white"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  )}
+                >
+                  <item.icon className="w-4 h-4" />
+                  <span className="text-sm font-medium">{item.name}</span>
+                </Link>
+              ))}
+            </nav>
 
-  <div class="history" id="history">
-    <div>Welcome to Claimly! Daily login = 10 points</div>
-  </div>
-</div>
+            {/* Points & Profile */}
+            <div className="flex items-center gap-3">
+              {userRewards && (
+                <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl glass">
+                  <Sparkles className="w-4 h-4 text-yellow-400" />
+                  <span className="text-white font-semibold">
+                    {userRewards.points_balance?.toLocaleString() || 0}
+                  </span>
+                  {userRewards.is_vip && (
+                    <Crown className="w-4 h-4 text-yellow-400 ml-1" />
+                  )}
+                </div>
+              )}
+              
+              <Link
+                to={createPageUrl('Profile')}
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white hover:opacity-90 transition-opacity"
+              >
+                <User className="w-5 h-5" />
+              </Link>
 
-<script>
-let balance = 100;
-let rolling = false;
-let rollHistory = [];
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden w-10 h-10 rounded-xl glass flex items-center justify-center text-white"
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+        </div>
 
-const diceEl = document.getElementById("dice");
-const balanceEl = document.getElementById("balance");
-const resultEl = document.getElementById("result");
-const betInput = document.getElementById("bet");
-const historyEl = document.getElementById("history");
-const rollBtn = document.querySelector(".roll-btn");
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden glass border-t border-white/10">
+            <nav className="px-4 py-4 space-y-2">
+              {navItems.map((item) => (
+                <Link
+                  key={item.page}
+                  to={createPageUrl(item.page)}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
+                    currentPageName === item.page
+                      ? "bg-gradient-to-r from-yellow-400/20 to-purple-500/20 text-white"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  )}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span className="font-medium">{item.name}</span>
+                </Link>
+              ))}
+            </nav>
+          </div>
+        )}
+      </header>
 
-function updateBalance() {
-  balanceEl.textContent = Math.max(0, balance).toLocaleString();
-  rollBtn.disabled = balance < 5;
+      {/* Main Content */}
+      <main className="pt-20 pb-8 min-h-screen">
+        {children}
+      </main>
+
+      {/* Mobile Bottom Nav */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-2 py-2">
+        <div className="flex items-center justify-around">
+          {navItems.map((item) => (
+            <Link
+              key={item.page}
+              to={createPageUrl(item.page)}
+              className={cn(
+                "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all",
+                currentPageName === item.page
+                  ? "text-yellow-400"
+                  : "text-slate-500 hover:text-white"
+              )}
+            >
+              <item.icon className="w-5 h-5" />
+              <span className="text-[10px] font-medium">{item.name}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
+    </div>
+  );
 }
-
-function addHistory(msg, type = '') {
-  rollHistory.unshift(`${new Date().toLocaleTimeString()}: ${msg}`);
-  if (rollHistory.length > 8) rollHistory.pop();
-  historyEl.innerHTML = rollHistory.map(h => `<div>${h}</div>`).join('');
-}
-
-function loginTikTok() {
-  // TikTok Login Kit integration point
-  const redirectUri = window.location.origin + '/auth/callback';
-  window.location.href = `https://www.tiktok.com/v2/auth/authorize/?client_key=YOUR_CLIENT_KEY&scope=user.info.basic,video.publish&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
-}
-
-function buyRolls(count) {
-  // Stripe/Cwallet IAP integration point
-  alert(`Purchased ${count} extra rolls for $${count === 5 ? 0.99 : 3.99}! +${count * 10} bonus points!`);
-  balance += count * 10;
-  updateBalance();
-  addHistory(`Bought ${count} rolls (+${count * 10} points)`);
-}
-
-function buyBox() {
-  const rewards = ['+50 points', '+100 points', 'Free Roll', 'VIP Day', '+5 Rolls'];
-  const reward = rewards[Math.floor(Math.random() * rewards.length)];
-  alert(`🎁 Mystery Box: ${reward}!`);
-  if (reward.includes('points')) balance += parseInt(reward) || 50;
-  updateBalance();
-  addHistory(`Mystery Box: ${reward}`);
-}
-
-function rollDice() {
-  if (rolling) return;
-  let bet = parseInt(betInput.value);
-  if (bet > balance || bet < 5) {
-    resultEl.innerHTML = "<span class='lose'>❌ Bet 5-50 points only</span>";
-    return;
-  }
-
-  rolling = true;
-  rollBtn.disabled = true;
-  diceEl.classList.add("roll");
-  resultEl.textContent = "🎲 Rolling...";
-
-  setTimeout(() => {
-    const d1 = Math.floor(Math.random() * 6) + 1;
-    const d2 = Math.floor(Math.random() * 6) + 1;
-    const total = d1 + d2;
-
-    diceEl.classList.remove("roll");
-    diceEl.innerHTML = `🎲 <span style="font-size:.6em">${d1}</span> 🎲 <span style="font-size:.6em">${d2}</span>`;
-
-    let payout = 0;
-    let message = '';
-
-    // Improved casino odds (84% win rate for engagement)
-    if (d1 === d2) {
-      payout = bet * 4; // Doubles = big win
-      message = `🎉 DOUBLES! +${payout}`;
-      resultEl.className = "result win";
-    } else if (total >= 8) {
-      payout = bet * 2.5;
-      message = `💰 Big Win! +${payout}`;
-      resultEl.className = "result win";
-    } else if (total >= 5) {
-      payout = bet * 1.5;
-      message = `✅ Win! +${payout}`;
-      resultEl.className = "result win";
-    } else {
-      balance -= bet;
-      message = `😔 Lost ${bet}`;
-      resultEl.className = "result lose";
-    }
-
-    if (payout > 0) balance += payout;
-    resultEl.innerHTML = message;
-    updateBalance();
-    addHistory(message);
-    rolling = false;
-  }, 1200);
-}
-
-updateBalance();
-</script>
-</body>
-</html>
